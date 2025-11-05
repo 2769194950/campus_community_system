@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.PartitionMapper">
+    <sql id="selectFields">
+        id, name, description, post_count, create_time
+    </sql>
+
+    <sql id="insertFields">
+        name, description, post_count, create_time
+    </sql>
+
+    <select id="selectAll" resultType="com.campus.forum.dal.domain.Partition">
+        select <include refid="selectFields"></include>
+        from `partition`
+    </select>
+
+    <select id="selectById" resultType="com.campus.forum.dal.domain.Partition">
+        select <include refid="selectFields"></include>
+        from `partition`
+        where id = #{id}
+    </select>
+    <select id="selectByName" resultType="com.campus.forum.dal.domain.Partition">
+        select <include refid="selectFields"></include>
+        from `partition`
+        where name = #{name}
+    </select>
+    <insert id="insertPartition" parameterType="com.campus.forum.dal.domain.Partition" keyProperty="id">
+        insert into `partition`(<include refid="insertFields"></include>)
+        values(#{name}, #{description}, #{postCount}, #{createTime})
+    </insert>
+</mapper>
+

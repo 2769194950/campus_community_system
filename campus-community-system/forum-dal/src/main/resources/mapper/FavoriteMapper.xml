@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.FavoriteMapper">
+
+    <insert id="insertFavorite" parameterType="com.campus.forum.dal.domain.Favorite">
+        INSERT INTO favorite (user_id, post_id, create_time)
+        VALUES (#{userId}, #{postId}, NOW())
+    </insert>
+
+    <delete id="deleteFavorite">
+        DELETE FROM favorite WHERE user_id = #{userId} AND post_id = #{postId}
+    </delete>
+
+    <select id="selectFavorite" resultType="com.campus.forum.dal.domain.Favorite">
+        SELECT id, user_id, post_id, create_time
+        FROM favorite
+        WHERE user_id = #{userId} AND post_id = #{postId}
+    </select>
+
+    <select id="selectFavoritesByUserId" resultType="com.campus.forum.dal.domain.Post">
+        SELECT p.id, p.user_id, p.title, p.create_time, p.comment_count, p.like_count
+        FROM post p
+        JOIN favorite f ON p.id = f.post_id
+        WHERE f.user_id = #{userId}
+        ORDER BY f.create_time DESC
+    </select>
+
+    <select id="countFavoritesByPostId" resultType="long">
+        SELECT count(id)
+        FROM favorite
+        WHERE post_id = #{postId}
+    </select>
+
+</mapper>

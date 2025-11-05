@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" defaultCharsetForPropertiesFiles="UTF-8">
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-dal/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-dal/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-starter" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-starter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/forum-starter/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/campus-community-system/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.CommentMapper">
+    
+    <resultMap id="CommentWithUser" type="com.campus.forum.dal.domain.Comment">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="entityType" column="entity_type"/>
+        <result property="entityId" column="entity_id"/>
+        <result property="targetId" column="target_id"/>
+        <result property="content" column="content"/>
+        <result property="status" column="status"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="createTime" column="create_time"/>
+        <association property="user" javaType="com.campus.forum.dal.domain.User">
+            <id property="id" column="u_id"/>
+            <result property="username" column="username"/>
+            <result property="avatarUrl" column="avatar_url"/>
+        </association>
+    </resultMap>
+
+    <sql id="selectFields">
+        id, user_id, entity_type, entity_id, target_id, content, status, like_count, create_time
+    </sql>
+
+    <sql id="insertFields">
+        user_id, entity_type, entity_id, target_id, content, status, like_count, create_time
+    </sql>
+
+    <select id="selectCommentsByEntity" resultMap="CommentWithUser">
+        select c.id, c.user_id, c.entity_type, c.entity_id, c.target_id, c.content, c.status, c.like_count, c.create_time,
+               u.id as u_id, u.username, u.avatar_url
+        from comment c
+        left join user u on c.user_id = u.id
+        where c.status = 0
+        and c.entity_type = #{entityType}
+        and c.entity_id = #{entityId}
+        order by c.create_time asc
+    </select>
+
+    <insert id="insertComment" parameterType="com.campus.forum.dal.domain.Comment" keyProperty="id">
+        insert into comment(<include refid="insertFields"></include>)
+        values(#{userId}, #{entityType}, #{entityId}, #{targetId}, #{content}, #{status}, #{likeCount}, #{createTime})
+    </insert>
+
+    <update id="updateStatus">
+        update comment set status = #{status} where id = #{id}
+    </update>
+    
+</mapper>
+
