@@ -86,4 +86,11 @@ body {
   background-color: #fff;
   border-top: 1px solid #e4e7ed;
 }
+
+/* 多标签页登录冲突对话框样式 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 </style>

@@ -23,21 +23,29 @@
                 />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" native-type="submit" style="width: 100%"
+                <el-button
+                  type="primary"
+                  native-type="submit"
+                  style="width: 100%"
                   >登录</el-button
                 >
               </el-form-item>
               <el-form-item style="text-align: center">
-                <el-link type="primary" @click="showForgotPassword">忘记密码？</el-link>
+                <el-link type="primary" @click="showForgotPassword"
+                  >忘记密码？</el-link
+                >
               </el-form-item>
             </el-form>
           </div>
         </div>
       </div>
     </div>
-    
+
     <!-- 忘记密码弹窗 -->
-    <ForgotPasswordModal :visible="forgotPasswordVisible" @close="forgotPasswordVisible = false" />
+    <ForgotPasswordModal
+      :visible="forgotPasswordVisible"
+      @close="forgotPasswordVisible = false"
+    />
   </div>
 </template>
 
@@ -49,13 +57,13 @@ import ForgotPasswordModal from "./ForgotPasswordModal.vue";
 export default {
   name: "LoginModal",
   components: {
-    ForgotPasswordModal
+    ForgotPasswordModal,
   },
   data() {
     return {
       username: "",
       password: "",
-      forgotPasswordVisible: false
+      forgotPasswordVisible: false,
     };
   },
   methods: {

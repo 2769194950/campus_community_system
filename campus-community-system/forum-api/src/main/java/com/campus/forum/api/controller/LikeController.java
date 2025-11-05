@@ -39,7 +39,10 @@ public class LikeController {
         int entityUserId = (Integer) payload.get("entityUserId");
 
         likeService.like(user.getId(), entityType, entityId, entityUserId);
+
         long likeCount = likeService.findEntityLikeCount(entityType, entityId);
+        // 用于统一数据库问题，书写不规范仅调试可用
+        postMapper.updateLikeCount(entityId,likeCount);
         int likeStatus = likeService.findEntityLikeStatus(user.getId(), entityType, entityId);
         Map<String, Object> map = new HashMap<>();
         map.put("likeCount", likeCount);

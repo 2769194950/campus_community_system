@@ -10,10 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Map;
+import java.util.*;
 import com.campus.forum.util.HostHolder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CookieValue;
+
+import com.campus.forum.service.CommentService;
+import com.campus.forum.service.FavoriteService;
+import com.campus.forum.service.LikeService;
+import com.campus.forum.service.PostService;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author Bugar
@@ -63,10 +69,12 @@ public class UserController {
         return Result.success();
     }
 
-    @GetMapping("/profile/{userId}")
-    public Result getProfile(@PathVariable("userId") int userId) {
-        User user = userService.findUserById(userId);
-        return Result.success(user);
+    /** 获取用户资料（用于个人主页和他人主页） */
+    @GetMapping("/profile/{id}")
+    public Result getProfile(@PathVariable("id") int id) {
+        User u = userService.findUserById(id);
+        if (u == null) return Result.error(404, "用户不存在");
+        return Result.success(u);
     }
 
     @PutMapping("/profile")
@@ -132,38 +140,38 @@ public class UserController {
     }
 
     // ==================== 找回密码功能 ====================
-    
+
     @PostMapping("/forgot-password")
     public Result forgotPassword(@RequestBody Map<String, String> params) {
         String email = params.get("email");
         Map<String, Object> result = userService.sendResetPasswordEmail(email);
-        
+
         if (result.containsKey("emailMsg")) {
             return Result.error(400, (String) result.get("emailMsg"));
         }
-        
+
         return Result.success("重置密码邮件已发送，请查收邮箱！");
     }
-    
+
     @PostMapping("/reset-password")
     public Result resetPassword(@RequestBody Map<String, String> params) {
         String token = params.get("token");
         String newPassword = params.get("newPassword");
-        
+
         Map<String, Object> result = userService.resetPassword(token, newPassword);
-        
+
         if (result.containsKey("tokenMsg")) {
             return Result.error(400, (String) result.get("tokenMsg"));
         }
         if (result.containsKey("passwordMsg")) {
             return Result.error(400, (String) result.get("passwordMsg"));
         }
-        
+
         return Result.success("密码重置成功！");
     }
-    
+
     // ==================== 密保问题功能 ====================
-    
+
     /**
      * 设置密保问题
      */
@@ -173,36 +181,36 @@ public class UserController {
         if (currentUser == null) {
             return Result.error(401, "未登录");
         }
-        
+
         String question = params.get("question");
         String answer = params.get("answer");
-        
+
         if (StringUtils.isBlank(question) || StringUtils.isBlank(answer)) {
             return Result.error(400, "请填写密保问题和答案！");
         }
-        
+
         userService.updateSecurityQuestion(currentUser.getId(), question, answer);
-        
+
         return Result.success("密保问题设置成功！");
     }
-    
+
     /**
      * 获取用户的密保问题（用于找回密码）
      */
     @GetMapping("/security-question")
     public Result getSecurityQuestion(@RequestParam("username") String username) {
         Map<String, Object> result = userService.getSecurityQuestion(username);
-        
+
         if (result.containsKey("usernameMsg")) {
             return Result.error(400, (String) result.get("usernameMsg"));
         }
         if (result.containsKey("questionMsg")) {
             return Result.error(400, (String) result.get("questionMsg"));
         }
-        
+
         return Result.success(result);
     }
-    
+
     /**
      * 通过密保问题重置密码
      */
@@ -211,18 +219,77 @@ public class UserController {
         String username = params.get("username");
         String answer = params.get("answer");
         String newPassword = params.get("newPassword");
-        
+
         Map<String, Object> result = userService.resetPasswordBySecurityQuestion(
-            username, answer, newPassword
+                username, answer, newPassword
         );
-        
+
         if (result.containsKey("error")) {
             return Result.error(400, (String) result.get("error"));
         }
         if (result.containsKey("passwordMsg")) {
             return Result.error(400, (String) result.get("passwordMsg"));
         }
-        
+
         return Result.success("密码重置成功！");
+    }
+    // 供帖子详情/他人主页使用
+    @Autowired private PostService postService;
+
+    // 个人主页三个 Tab：我的评论 / 我的点赞 / 我的收藏
+    @Autowired private CommentService commentService;
+    @Autowired private LikeService likeService;
+    @Autowired private FavoriteService favoriteService;
+
+    // ===== 基础资料 =====
+
+    /**
+     * 活跃用户榜（支持 period+limit）
+     */
+    @GetMapping("/active")
+    public Result getActiveUsers(@RequestParam(defaultValue = "10") int limit,
+                                 @RequestParam(required = false, defaultValue = "all") String period) {
+        java.util.List<User> users = userService.findActiveUsersByPeriod(limit, period);
+        return Result.success(users);
+    }
+    /** 当前登录用户自己的资料（如果你需要） */
+    @GetMapping("/me")
+    public Result me() {
+        User u = hostHolder.getUser();
+        if (u == null) return Result.error(403, "你还没有登录哦");
+        return Result.success(userService.findUserById(u.getId()));
+    }
+
+    // ===== 个人主页 - 三个 Tab =====
+
+    /** 我的评论（按时间倒序） */
+    @GetMapping("/{id}/comments")
+    public Result myComments(@PathVariable("id") int userId) {
+        return Result.success(commentService.findCommentsByUser(userId));
+    }
+
+    // 我点赞的帖子（用于“我的”页 Tab）
+    @GetMapping("/{id}/liked-posts")
+    public Result myLikedPosts(@PathVariable("id") int userId) {
+        List<Integer> ids = likeService.findLikedPostIdsByUser(userId);
+        return Result.success(postService.findByIds(ids));
+    }
+
+    /** 我的收藏（按时间倒序） */
+    @GetMapping("/{id}/favorites")
+    public Result myFavorites(@PathVariable("id") int userId) {
+        return Result.success(favoriteService.findFavoritesByUserId(userId));
+    }
+
+    // ===== 与我相关（可选：如果前端需要“与我相关”的聚合） =====
+    @GetMapping("/{id}/related")
+    public Result relatedToMe(@PathVariable("id") int myUserId) {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        map.put("commentsOnMyPosts", commentService.findCommentsOnMyPosts(myUserId));
+        map.put("repliesToMe", commentService.findRepliesToMe(myUserId));
+        map.put("likesOnMe", likeService.findLikesOnMe(myUserId));
+        // 如果你实现了别人收藏了我的帖子：
+        // map.put("favoritesOnMyPosts", favoriteService.findFavoritesOnMyPosts(myUserId));
+        return Result.success(map);
     }
 }

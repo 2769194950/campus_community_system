@@ -25,5 +25,9 @@ public class User {
     // 密保问题
     private String securityQuestion;
     private String securityAnswer;
+    
+    // 统计字段（用于榜单等功能）
+    private Integer postCount;
+    private Integer commentCount;
 }
 

@@ -17,7 +17,10 @@
         <!-- 头像 -->
         <el-form-item label="头像">
           <div class="avatar-upload">
-            <el-avatar :size="100" :src="avatarPreview || profileForm.avatarUrl"></el-avatar>
+            <el-avatar
+              :size="100"
+              :src="avatarPreview || profileForm.avatarUrl"
+            ></el-avatar>
             <div class="avatar-actions">
               <el-upload
                 class="avatar-uploader"
@@ -43,10 +46,7 @@
 
         <!-- 用户名 -->
         <el-form-item label="用户名" prop="username">
-          <el-input
-            v-model="profileForm.username"
-            placeholder="请输入用户名"
-          />
+          <el-input v-model="profileForm.username" placeholder="请输入用户名" />
         </el-form-item>
 
         <!-- 邮箱 -->
@@ -112,7 +112,11 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="submitSecurityQuestion" :loading="securityLoading">
+          <el-button
+            type="primary"
+            @click="submitSecurityQuestion"
+            :loading="securityLoading"
+          >
             保存密保问题
           </el-button>
         </el-form-item>
@@ -190,7 +194,8 @@ export default {
               username: userData.username || "",
               email: userData.email || "",
               avatarUrl: userData.avatarUrl || "",
-              introduction: userData.introduction || "这个人很懒，什么都没有留下...",
+              introduction:
+                userData.introduction || "这个人很懒，什么都没有留下...",
             };
             // 保存原始数据
             this.originalData = { ...this.profileForm };
@@ -261,7 +266,9 @@ export default {
           });
 
           // 更新个人简介
-          if (this.profileForm.introduction !== this.originalData.introduction) {
+          if (
+            this.profileForm.introduction !== this.originalData.introduction
+          ) {
             console.log("更新个人简介:", this.profileForm.introduction);
             const res1 = await axios.put("/api/user/profile", {
               introduction: this.profileForm.introduction,
@@ -298,7 +305,7 @@ export default {
 
           console.log("所有更新完成");
           ElMessage.success("个人资料更新成功！");
-          
+
           // 更新Vuex中的用户信息
           this.$store.commit("setUser", {
             ...this.user,
@@ -404,4 +411,3 @@ export default {
   flex-direction: column;
 }
 </style>
-

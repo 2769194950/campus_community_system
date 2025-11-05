@@ -6,29 +6,25 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-/**
- * @author Bugar
- * @date 2024/5/16
- */
 @Mapper
 public interface MessageMapper {
 
-    // 查询当前用户的会话列表,针对每个会话只返回一条最新的私信.
-    List<Message> selectConversations(int userId);
+    int insert(Message m);
 
-    // 查询某个会话所包含的私信列表.
-    List<Message> selectLetters(String conversationId);
+    /** 我参与的会话（每个会话取最新一条消息） */
+    List<Message> selectConversations(@Param("userId") int userId);
 
-    // 查询未读私信的数量
-    int selectLetterUnreadCount(@Param("userId") int userId, @Param("conversationId") String conversationId);
+    /** 某个会话的消息列表（按时间升序） */
+    List<Message> selectLetters(@Param("conversationId") String conversationId,
+                                @Param("limit") int limit,
+                                @Param("offset") int offset);
 
-    // 新增消息
-    int insertMessage(Message message);
+    /** 某会话中发给我的未读数 */
+    int countUnread(@Param("userId") int userId, @Param("conversationId") String conversationId);
 
-    // 修改消息的状态
-    int updateStatus(List<Integer> ids, int status);
+    /** 把某会话中发给我的消息设为已读 */
+    int markRead(@Param("userId") int userId, @Param("conversationId") String conversationId);
 
-    int selectNoticeUnreadCount(@Param("userId") int userId, @Param("topic") String topic);
-
+    /** 最近一条，用于返回新发消息 */
+    Message selectById(@Param("id") int id);
 }
-

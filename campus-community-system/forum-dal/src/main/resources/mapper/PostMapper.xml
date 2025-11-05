@@ -48,6 +48,17 @@
         </if>
         order by p.type desc, p.create_time desc
     </select>
+
+    <select id="selectLatestPosts" resultMap="PostWithUser">
+        SELECT p.id, p.user_id, p.partition_id, p.title, p.content, p.type, p.status, 
+               p.view_count, p.comment_count, p.like_count, p.favorite_count, p.score, p.create_time,
+               u.id as u_id, u.username, u.avatar_url
+        FROM post p
+        LEFT JOIN user u ON p.user_id = u.id
+        WHERE p.status != 2
+        ORDER BY p.create_time DESC
+        LIMIT #{limit}
+    </select>
     
     <select id="selectPostById" resultMap="PostWithUser">
         select p.id, p.user_id, p.partition_id, p.title, p.content, p.type, p.status, 
@@ -58,7 +69,7 @@
         where p.id = #{id}
     </select>
 
-    <insert id="insertPost" parameterType="com.campus.forum.dal.domain.Post" keyProperty="id">
+    <insert id="insertPost" parameterType="com.campus.forum.dal.domain.Post" keyProperty="id" useGeneratedKeys="true">
         insert into post(<include refid="insertFields"></include>)
         values(#{userId}, #{partitionId}, #{title}, #{content}, #{type}, #{status}, #{viewCount}, #{commentCount}, #{likeCount}, #{favoriteCount}, #{score}, #{createTime})
     </insert>
@@ -89,6 +100,28 @@
         limit #{limit}
     </select>
 
+    <update id="incrementLikeCount">
+        update post set like_count = like_count + 1 where id = #{id}
+    </update>
+
+    <update id="decrementLikeCount">
+        update post set like_count = like_count - 1 where id = #{id} and like_count > 0
+    </update>
+    <update id="updateViewCount">
+        update post set view_count = #{viewCount} where id = #{id}
+    </update>
+    <update id="incrementViewCount">
+        update post set view_count = view_count + 1 where id = #{id}
+    </update>
+    <update id="incrementCommentCount">
+        update post set comment_count = comment_count + 1 where id = #{id}
+    </update>
+    <update id="decrementCommentCount">
+        update post set comment_count = comment_count - 1 where id = #{id}
+
+    </update>
+
+
     <select id="selectPostsByKeyword" resultMap="PostWithUser">
         select p.id, p.user_id, p.partition_id, p.title, p.content, p.type, p.status, 
                p.view_count, p.comment_count, p.like_count, p.favorite_count, p.score, p.create_time,
@@ -109,5 +142,92 @@
         where p.status != 2
         order by p.create_time desc
         limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectViewCount" resultType="java.lang.Integer">
+        select view_count from post where id = #{id}
+    </select>
+    <select id="selectByIds" resultMap="PostWithUser">
+        SELECT p.*, u.id as u_id, u.username, u.avatar_url
+        FROM post p
+        LEFT JOIN user u ON p.user_id = u.id
+        WHERE p.id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="countPosts" resultType="int">
+        select count(*) from post where status != 2
+    </select>
+
+    <!-- 根据时间周期获取热门帖子 -->
+    <select id="selectHotPostsByPeriod" resultMap="PostWithUser">
+        select p.id, p.user_id, p.partition_id, p.title, p.content, p.type, p.status, 
+               p.view_count, p.comment_count, p.like_count, p.favorite_count, p.score, p.create_time,
+               u.id as u_id, u.username, u.avatar_url
+        from post p
+        left join user u on p.user_id = u.id
+        where p.status != 2
+        <if test="period == 'daily'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        </if>
+        <if test="period == 'weekly'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+        </if>
+        <if test="period == 'monthly'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        </if>
+        order by (p.like_count + p.comment_count + p.favorite_count) desc, p.create_time desc
+        limit #{limit}
+    </select>
+
+    <!-- 根据收藏数排序获取帖子 -->
+    <select id="selectPostsByFavorites" resultMap="PostWithUser">
+        select p.id, p.user_id, p.partition_id, p.title, p.content, p.type, p.status, 
+               p.view_count, p.comment_count, p.like_count, p.favorite_count, p.score, p.create_time,
+               u.id as u_id, u.username, u.avatar_url
+        from post p
+        left join user u on p.user_id = u.id
+        where p.status != 2
+        <if test="period == 'daily'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        </if>
+        <if test="period == 'weekly'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+        </if>
+        <if test="period == 'monthly'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        </if>
+        <if test="period == 'latest'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        </if>
+        order by p.favorite_count desc, p.create_time desc
+        limit #{limit}
+    </select>
+
+    <!-- 根据点赞数排序获取帖子 -->
+    <select id="selectPostsByLikes" resultMap="PostWithUser">
+        select p.id, p.user_id, p.partition_id, p.title, p.content, p.type, p.status, 
+               p.view_count, p.comment_count, p.like_count, p.favorite_count, p.score, p.create_time,
+               u.id as u_id, u.username, u.avatar_url
+        from post p
+        left join user u on p.user_id = u.id
+        where p.status != 2
+        <if test="period == 'daily'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        </if>
+        <if test="period == 'weekly'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+        </if>
+        <if test="period == 'monthly'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+        </if>
+        <if test="period == 'latest'">
+            AND p.create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        </if>
+        order by p.like_count desc, p.create_time desc
+        limit #{limit}
     </select>
 </mapper>

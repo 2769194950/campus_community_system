@@ -30,4 +30,8 @@ public interface UserService {
     int updateSecurityQuestion(int userId, String question, String answer);
     Map<String, Object> getSecurityQuestion(String username);
     Map<String, Object> resetPasswordBySecurityQuestion(String username, String answer, String newPassword);
+
+    // 活跃用户榜（period+limit 支持）
+    java.util.List<com.campus.forum.dal.domain.User> findActiveUsers(int limit);
+    java.util.List<com.campus.forum.dal.domain.User> findActiveUsersByPeriod(int limit, String period);
 }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.MessageMapper">
+
+    <resultMap id="MessageMap" type="com.campus.forum.dal.domain.Message">
+        <id     property="id" column="id"/>
+        <result property="fromId" column="from_id"/>
+        <result property="toId" column="to_id"/>
+        <result property="conversationId" column="conversation_id"/>
+        <result property="content" column="content"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO message(from_id,to_id,conversation_id,content,status,create_time)
+        VALUES(#{fromId},#{toId},#{conversationId},#{content},#{status},NOW())
+    </insert>
+
+    <!-- 我参与的所有会话，每个会话取最新一条 -->
+    <select id="selectConversations" resultMap="MessageMap">
+        SELECT *
+        FROM message m
+        WHERE m.id IN (
+            SELECT t.id
+            FROM (
+                     SELECT id, conversation_id, create_time
+                     FROM message
+                     WHERE from_id = #{userId} OR to_id = #{userId}
+                     ORDER BY create_time DESC
+                 ) t
+            GROUP BY t.conversation_id
+        )
+        ORDER BY m.create_time DESC
+    </select>
+
+
+    <select id="selectLetters" resultMap="MessageMap">
+        SELECT id, from_id, to_id, conversation_id, content, status, create_time
+        FROM message
+        WHERE conversation_id = #{conversationId}
+        ORDER BY create_time ASC
+            LIMIT #{offset}, #{limit}
+    </select>
+
+
+    <select id="countUnread" resultType="int">
+        SELECT COUNT(1) FROM message
+        WHERE to_id = #{userId} AND status = 0
+          AND conversation_id = #{conversationId}
+    </select>
+
+    <update id="markRead">
+        UPDATE message
+        SET status = 1
+        WHERE to_id = #{userId} AND status = 0
+          AND conversation_id = #{conversationId}
+    </update>
+
+    <select id="selectById" resultMap="MessageMap">
+        SELECT * FROM message WHERE id = #{id}
+    </select>
+</mapper>

@@ -33,7 +33,9 @@
               />
             </el-form-item>
 
-            <el-divider content-position="left">设置密保问题（用于找回密码）</el-divider>
+            <el-divider content-position="left"
+              >设置密保问题（用于找回密码）</el-divider
+            >
 
             <el-form-item label="密保问题">
               <el-input
@@ -85,20 +87,20 @@ export default {
         ElMessage.error("用户名、邮箱和密码不能为空！");
         return;
       }
-      
+
       // 验证邮箱格式
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(this.email)) {
         ElMessage.error("请输入正确的邮箱格式！");
         return;
       }
-      
+
       // 验证密码长度
       if (this.password.length < 6) {
         ElMessage.error("密码长度不能少于6位！");
         return;
       }
-      
+
       // 验证两次密码是否一致
       if (this.password !== this.confirmPassword) {
         ElMessage.error("两次输入的密码不一致！");
@@ -110,7 +112,7 @@ export default {
         ElMessage.error("请填写密保问题和答案！");
         return;
       }
-      
+
       try {
         // 先注册用户
         const registerResponse = await axios.post("/api/user/register", {
@@ -118,7 +120,7 @@ export default {
           email: this.email,
           password: this.password,
         });
-        
+
         if (registerResponse.data.code === 200) {
           // 注册成功后，自动登录并设置密保问题
           const loginResponse = await axios.post("/api/user/login", {
@@ -128,7 +130,7 @@ export default {
 
           if (loginResponse.data.code === 200) {
             const token = loginResponse.data.data.ticket;
-            
+
             // 设置密保问题
             await axios.post(
               "/api/user/security-question",
@@ -145,14 +147,16 @@ export default {
 
             ElMessage.success("注册成功！密保问题已设置");
             this.$emit("close");
-            
+
             // 刷新页面以更新登录状态
             setTimeout(() => {
               window.location.reload();
             }, 1000);
           }
         } else {
-          ElMessage.error(registerResponse.data.message || "注册失败，请稍后再试。");
+          ElMessage.error(
+            registerResponse.data.message || "注册失败，请稍后再试。"
+          );
         }
       } catch (error) {
         console.error("注册请求失败:", error);

@@ -4,7 +4,13 @@
       <template #header>
         <h2 class="post-title">{{ post.title }}</h2>
         <div class="post-meta">
-          <span>作者: {{ post.user.username }}</span>
+          <!-- 这里换成可跳转的 router-link -->
+          <span>
+            作者：
+            <router-link :to="'/profile/' + (post.userId || post.user.id)">
+              {{ post.user.username }}
+            </router-link>
+          </span>
           <span>发布于: {{ formatDate(post.createTime) }}</span>
           <span><i class="el-icon-view"></i> {{ post.viewCount }}</span>
           <el-button

@@ -65,5 +65,82 @@
         where id = #{id}
     </update>
 
+    <select id="countUsers" resultType="int">
+        select count(*) from user
+    </select>
+
+    <select id="selectAllUsers" resultType="com.campus.forum.dal.domain.User">
+        select <include refid="selectFields"></include>
+        from user
+        order by create_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectActiveUsers" resultType="com.campus.forum.dal.domain.User">
+        select u.id, u.username, u.password, u.salt, u.email, u.type, u.status, 
+               u.activation_code, u.avatar_url, u.introduction, u.security_question, 
+               u.security_answer, u.create_time,
+               COALESCE(p.post_count, 0) as postCount,
+               COALESCE(c.comment_count, 0) as commentCount
+        from user u
+        left join (
+            select user_id, count(*) as post_count 
+            from post 
+            where status = 0 
+            group by user_id
+        ) p on u.id = p.user_id
+        left join (
+            select user_id, count(*) as comment_count 
+            from comment 
+            where status = 0 
+            group by user_id
+        ) c on u.id = c.user_id
+        where u.status = 1
+        order by (COALESCE(p.post_count, 0) + COALESCE(c.comment_count, 0)) desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectActiveUsersByPeriod" resultType="com.campus.forum.dal.domain.User">
+        select u.id, u.username, u.password, u.salt, u.email, u.type, u.status, 
+               u.activation_code, u.avatar_url, u.introduction, u.security_question, 
+               u.security_answer, u.create_time,
+               COALESCE(p.post_count, 0) as postCount,
+               COALESCE(c.comment_count, 0) as commentCount
+        from user u
+        left join (
+            select user_id, count(*) as post_count 
+            from post 
+            where status = 0 
+            <if test="period == 'daily'">
+                and create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+            </if>
+            <if test="period == 'weekly'">
+                and create_time >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            </if>
+            <if test="period == 'monthly'">
+                and create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            </if>
+            group by user_id
+        ) p on u.id = p.user_id
+        left join (
+            select user_id, count(*) as comment_count 
+            from comment 
+            where status = 0 
+            <if test="period == 'daily'">
+                and create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+            </if>
+            <if test="period == 'weekly'">
+                and create_time >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            </if>
+            <if test="period == 'monthly'">
+                and create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            </if>
+            group by user_id
+        ) c on u.id = c.user_id
+        where u.status = 1
+        order by (COALESCE(p.post_count, 0) + COALESCE(c.comment_count, 0)) desc
+        limit #{offset}, #{limit}
+    </select>
+
 </mapper>
 

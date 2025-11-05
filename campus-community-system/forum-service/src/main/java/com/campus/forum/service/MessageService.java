@@ -1,26 +1,16 @@
 package com.campus.forum.service;
 
 import com.campus.forum.dal.domain.Message;
-
 import java.util.List;
 
-/**
- * @author Bugar
- * @date 2024/5/16
- */
 public interface MessageService {
+    Message send(int fromId, int toId, String content);
+    List<Message> conversations(int userId);
+    List<Message> letters(String conversationId, int limit, int offset);
+    int unreadCount(int userId, String conversationId);
+    int markRead(int userId, String conversationId);
 
-    List<Message> findConversations(int userId);
-
-    List<Message> findLetters(String conversationId);
-
-    int findLetterUnreadCount(int userId, String conversationId);
-
-    int addMessage(Message message);
-
-    int readMessage(List<Integer> ids);
-    
-    // find unread notice count for a user
-    int findNoticeUnreadCount(int userId, String topic);
+    static String convId(int a, int b) {
+        return (Math.min(a,b)) + "_" + (Math.max(a,b));
+    }
 }
-

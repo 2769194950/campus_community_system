@@ -90,5 +90,8 @@ public interface ForumConstant {
      * 权限: 版主
      */
     String AUTHORITY_MODERATOR = "moderator";
+
+    String POST_LIKED_KEY="post:like:";
+    String COMMENT_LIKED_KEY="comment:like:";
 }
 

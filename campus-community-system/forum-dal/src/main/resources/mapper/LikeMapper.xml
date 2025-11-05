@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.LikeMapper">
+
+    <select id="selectLikedPostsByUserId" resultType="com.campus.forum.dal.domain.Post">
+        SELECT p.id, p.user_id, p.title, p.create_time, p.comment_count, p.like_count
+        FROM campus_forum.like l
+                 JOIN post p ON p.id = l.entity_id
+        WHERE l.user_id = #{userId} AND l.entity_type = 1 AND l.status = 1
+        ORDER BY l.create_time DESC
+    </select>
+
+    <select id="existsPostLike" resultType="int">
+        SELECT COUNT(1) FROM campus_forum.like
+        WHERE user_id = #{userId} AND entity_id = #{postId} AND entity_type = 1 AND status = 1
+    </select>
+
+    <insert id="insertPostLike">
+        INSERT INTO campus_forum.like (user_id, entity_type, entity_id, entity_user_id, status, create_time)
+        VALUES (#{userId}, 1, #{postId}, (SELECT user_id FROM post WHERE id = #{postId}), 1, NOW())
+            ON DUPLICATE KEY UPDATE status = 1, update_time = NOW()
+    </insert>
+
+    <delete id="deletePostLike">
+        UPDATE campus_forum.like SET status = 0, update_time = NOW() 
+        WHERE user_id = #{userId} AND entity_id = #{postId} AND entity_type = 1
+    </delete>
+</mapper>

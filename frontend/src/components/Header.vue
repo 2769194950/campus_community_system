@@ -1,235 +1,190 @@
 <template>
-  <div class="header-container">
-    <div class="logo">Campus Forum</div>
+  <div class="header">
+    <router-link class="logo" to="/">Campus Forum</router-link>
 
-    <!-- 登录后显示头像和菜单 (在logo右边) -->
-    <div v-if="user" class="user-menu-container">
-      <el-dropdown trigger="click" @command="handleCommand">
-        <div class="user-menu-trigger">
-          <el-avatar :size="32" :src="user.avatarUrl"></el-avatar>
-          <span class="username">{{ user.username }}</span>
-          <el-icon class="el-icon--right"><arrow-down /></el-icon>
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="messages">
-              <el-badge :value="unreadCount" :hidden="unreadCount === 0">
-                消息中心
-              </el-badge>
-            </el-dropdown-item>
-            <el-dropdown-item command="profile">个人主页</el-dropdown-item>
-            <el-dropdown-item v-if="user.type === 1" command="leaderboard">
-              榜单管理
-            </el-dropdown-item>
-            <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+    <!-- 普通用户导航 -->
+    <nav v-if="!isAdmin" class="nav">
+      <router-link to="/">首页</router-link>
+      <router-link to="/leaderboard">排行榜</router-link>
+      <!-- 只有登录用户才能访问个人主页和消息中心 -->
+      <router-link v-if="user" :to="`/profile/${user?.id || ''}`">个人主页</router-link>
+      <router-link v-if="user" to="/messages" class="messages-link">
+        消息中心
+        <el-badge 
+          v-if="unreadCount > 0" 
+          :value="unreadCount" 
+          :max="99" 
+          class="unread-badge"
+          type="danger"
+        />
+      </router-link>
+    </nav>
+
+    <!-- 管理员导航 -->
+    <nav v-else class="nav">
+      <router-link to="/admin">管理后台</router-link>
+    </nav>
+
+    <div class="right">
+      <!-- 未登录时显示登录/注册按钮 -->
+      <div v-if="!user">
+        <el-button 
+          type="primary" 
+          size="small" 
+          @click="$emit('show-login-modal')"
+        >
+          登录
+        </el-button>
+        <el-button 
+          type="success" 
+          size="small" 
+          @click="$emit('show-register-modal')"
+        >
+          注册
+        </el-button>
+      </div>
+
+      <!-- 登录后欢迎语和用户菜单 -->
+      <template v-else>
+        <span class="welcome">欢迎，{{ user.username }}</span>
+        <el-dropdown trigger="click">
+          <span class="user">
+            <el-avatar size="small" style="margin-right:6px">
+              {{ user.username[0] }}
+            </el-avatar>
+            {{ user.username }}
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-if="!isAdmin" @click="$router.push(`/profile/${user.id}`)">
+                个人主页
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="onLogout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </template>
     </div>
-
-    <div class="nav-item" :class="{ active: activeIndex === '/' }" @click="navigateTo('/')">
-      首页
-    </div>
-
-    <div class="search-container">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索帖子..."
-        @keyup.enter="handleSearch"
-        clearable
-      >
-        <template #suffix>
-          <el-icon @click="handleSearch" style="cursor: pointer">
-            <Search />
-          </el-icon>
-        </template>
-      </el-input>
-    </div>
-
-    <div class="flex-grow" />
-
-    <!-- 未登录时右边直接显示登录/注册按钮 -->
-    <template v-if="!user">
-      <el-button type="primary" @click="$emit('show-login-modal')" class="auth-button">
-        登录
-      </el-button>
-      <el-button @click="$emit('show-register-modal')" class="auth-button">
-        注册
-      </el-button>
-    </template>
   </div>
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { mapGetters } from "vuex";
 import axios from "axios";
-import { Search, ArrowDown } from "@element-plus/icons-vue";
-import { ElMessageBox } from "element-plus";
 
 export default {
   name: "Header",
-  components: {
-    Search,
-    ArrowDown,
-  },
   data() {
     return {
-      activeIndex: this.$route.path,
       unreadCount: 0,
-      searchKeyword: "",
+      unreadPolling: null
     };
   },
   computed: {
-    ...mapState(["user"]),
+    ...mapGetters(["user", "isAdmin"]),
   },
   watch: {
-    $route(to) {
-      this.activeIndex = to.path;
-    },
-    user(newUser) {
-      if (newUser) {
-        this.fetchUnreadCount();
-      }
-    },
-  },
-  created() {
-    if (this.user) {
-      this.fetchUnreadCount();
+    user: {
+      handler(newUser) {
+        if (newUser) {
+          this.startUnreadPolling();
+        } else {
+          this.stopUnreadPolling();
+        }
+      },
+      immediate: true
     }
   },
+  beforeUnmount() {
+    this.stopUnreadPolling();
+  },
   methods: {
-    ...mapActions(["logout"]),
-    navigateTo(path) {
-      this.$router.push(path);
+    async onLogout() {
+      const ok = await this.$store.dispatch("logout");
+      if (ok) this.$router.replace("/login");
     },
-    handleCommand(command) {
-      switch (command) {
-        case "messages":
-          this.$router.push("/messages");
-          break;
-        case "profile":
-          this.$router.push(`/profile/${this.user.id}`);
-          break;
-        case "leaderboard":
-          this.$router.push("/leaderboard");
-          break;
-        case "logout":
-          this.handleLogout();
-          break;
+    
+    startUnreadPolling() {
+      // 立即获取一次未读消息数
+      this.fetchUnreadCount();
+      
+      // 每隔5秒轮询一次未读消息数
+      this.unreadPolling = setInterval(() => {
+        this.fetchUnreadCount();
+      }, 5000);
+    },
+    
+    stopUnreadPolling() {
+      if (this.unreadPolling) {
+        clearInterval(this.unreadPolling);
+        this.unreadPolling = null;
       }
     },
-    async handleLogout() {
+    
+    async fetchUnreadCount() {
       try {
-        await ElMessageBox.confirm("确定要退出登录吗？", "退出确认", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        });
-        
-        const success = await this.logout();
-        if (success) {
-          window.location.href = "/";
+        const response = await axios.get("/api/message/unread-count");
+        if (response.data && response.data.code === 200) {
+          this.unreadCount = response.data.data || 0;
         }
       } catch (error) {
-        if (error === "cancel") {
-          return;
-        }
+        console.error("获取未读消息数失败:", error);
       }
-    },
-    fetchUnreadCount() {
-      axios.get("/api/message/unread-count").then((response) => {
-        if (response.data.code === 200) {
-          this.unreadCount = response.data.data;
-        }
-      });
-    },
-    handleSearch() {
-      if (this.searchKeyword.trim()) {
-        this.$router.push(
-          `/search?keyword=${encodeURIComponent(this.searchKeyword.trim())}`
-        );
-        this.searchKeyword = "";
-      }
-    },
+    }
   },
 };
 </script>
 
 <style scoped>
-.header-container {
+.header {
+  height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #dcdfe6;
-  gap: 20px;
+  padding: 0 16px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
 }
-
 .logo {
-  font-size: 20px;
-  font-weight: bold;
+  font-weight: 700;
   color: #409eff;
-  cursor: pointer;
+  text-decoration: none;
+  margin-right: 24px;
 }
-
-.user-menu-container {
-  display: flex;
-  align-items: center;
-}
-
-.user-menu-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.user-menu-trigger:hover {
-  background-color: #f5f7fa;
-}
-
-.username {
-  font-size: 14px;
+.nav a {
+  margin-right: 16px;
+  text-decoration: none;
   color: #303133;
+  position: relative;
+}
+.nav a:hover {
+  color: #409eff;
 }
 
-.nav-item {
-  padding: 0 15px;
-  height: 60px;
-  line-height: 60px;
+.right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.user {
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
-  color: #303133;
+}
+.welcome {
+  color: #606266;
   font-size: 14px;
-  transition: color 0.3s, border-bottom 0.3s;
-  border-bottom: 2px solid transparent;
 }
 
-.nav-item:hover {
-  color: #409eff;
+.messages-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.nav-item.active {
-  color: #409eff;
-  border-bottom: 2px solid #409eff;
-}
-
-.search-container {
-  width: 300px;
-}
-
-.flex-grow {
-  flex-grow: 1;
-}
-
-.auth-button {
-  margin-left: 0;
-}
-
-.auth-button + .auth-button {
-  margin-left: 10px;
+.unread-badge {
+  position: relative;
+  top: -8px;
+  right: -4px;
 }
 </style>

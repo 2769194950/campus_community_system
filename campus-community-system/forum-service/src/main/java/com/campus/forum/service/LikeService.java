@@ -1,12 +1,20 @@
 package com.campus.forum.service;
+import com.campus.forum.dal.domain.Post;
+import com.campus.forum.dal.domain.LikeLog;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Bugar
  * @date 2024/5/16
  */
 public interface LikeService {
+
+    int insertLikeLog(LikeLog likeLog);
+
+    int deleteLikeLogById(int id);
+
+    LikeLog selectLikeLog(int userId,int entityType,int entityId);
 
     /**
      * 点赞
@@ -34,17 +42,13 @@ public interface LikeService {
      */
     int findEntityLikeStatus(int userId, int entityType, int entityId);
 
-    /**
-     * 查询某个用户获得的赞
-     * @param userId
-     * @return
-     */
-    int findUserLikeCount(int userId);
-    
-    /**
-     * 同步实体点赞数到数据库
-     * @param entityType 实体类型
-     * @param entityId 实体ID
-     */
-    void syncEntityLikeCount(int entityType, int entityId);
+    List<com.campus.forum.dal.domain.LikeLog> findMyLikes(int userId);
+    List<com.campus.forum.dal.domain.LikeLog> findLikesOnMe(int myUserId);
+    // 新增：我点赞过的帖子ID
+    List<Integer> findLikedPostIdsByUser(int userId);
+    List<Post> findLikedPostsByUser(int userId);
+
+    boolean hasLiked(int userId, int postId);
+    void like(int userId, int postId);
+    void unlike(int userId, int postId);
 }

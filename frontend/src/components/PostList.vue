@@ -26,7 +26,8 @@
             </div>
           </template>
           <div class="post-meta">
-            <span>作者: {{ post.user ? post.user.username : '未知用户' }}</span> |
+            <span>作者: {{ post.user ? post.user.username : "未知用户" }}</span>
+            |
             <span>发布于: {{ formatDate(post.createTime) }}</span>
             |
             <span>评论: {{ post.commentCount || 0 }}</span>
@@ -72,29 +73,29 @@ export default {
   },
   methods: {
     formatDate(date) {
-      if (!date) return '未知时间';
+      if (!date) return "未知时间";
       try {
         return dayjs(date).format("YYYY-MM-DD HH:mm");
       } catch (error) {
-        console.error('日期格式化错误:', error, '原始日期:', date);
-        return '时间格式错误';
+        console.error("日期格式化错误:", error, "原始日期:", date);
+        return "时间格式错误";
       }
     },
     fetchPosts() {
       this.loading = true;
       const params = {};
-      
+
       // 只有当userId prop存在时才添加userId参数
       if (this.userId) {
         params.userId = this.userId;
       } else {
         params.userId = 0; // 0 indicates all users
       }
-      
+
       if (this.partitionId) {
         params.partitionId = this.partitionId;
       }
-      
+
       axios
         .get("/api/post/list", { params })
         .then((response) => {

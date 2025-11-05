@@ -10,15 +10,18 @@
         <i class="el-icon-menu"></i>
         <span>全部帖子</span>
       </el-menu-item>
-      <el-menu-item
-        v-for="partition in partitions"
-        :key="partition.id"
-        :index="partition.id.toString()"
-        @click="onPartitionSelect(partition.id)"
-      >
-        <i class="el-icon-collection-tag"></i>
-        <span>{{ partition.name }}</span>
-      </el-menu-item>
+      <div v-if="partitions && partitions.length > 0" class="partition-divider"></div>
+      <template v-for="(partition, index) in partitions" :key="partition.id">
+        <el-menu-item
+          :index="partition.id.toString()"
+          @click="onPartitionSelect(partition.id)"
+        >
+          <i class="el-icon-collection-tag"></i>
+          <span>{{ partition.name }}</span>
+        </el-menu-item>
+        <!-- 在每个分区项之间添加明显的分割线，但不在最后一项后添加 -->
+        <div v-if="index < partitions.length - 1" class="partition-divider"></div>
+      </template>
     </el-menu>
   </el-card>
 </template>
@@ -87,5 +90,21 @@ export default {
 }
 .partition-menu .el-menu-item i {
   margin-right: 10px;
+}
+
+/* 自定义分割线样式，使其更加明显 */
+.partition-menu :deep(.el-divider) {
+  margin: 4px 0;
+}
+
+.partition-menu :deep(.el-divider__text) {
+  background-color: #ffffff;
+}
+
+/* 添加自定义分割线类，使分割线更明显 */
+.partition-divider {
+  height: 1px;
+  background-color: #dcdfe6;
+  margin: 8px 0;
 }
 </style>

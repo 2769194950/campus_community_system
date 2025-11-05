@@ -3,6 +3,8 @@ package com.campus.forum.api.controller;
 import com.campus.forum.common.Result;
 import com.campus.forum.dal.domain.Post;
 import com.campus.forum.dal.domain.User;
+import com.campus.forum.dal.mapper.CommentMapper;
+import com.campus.forum.dal.mapper.PostMapper;
 import com.campus.forum.service.PostService;
 import com.campus.forum.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,10 @@ public class PostController {
 
     @Autowired
     private HostHolder hostHolder;
+    @Autowired
+    private PostMapper postMapper;
+    @Autowired
+    private CommentMapper commentMapper;
 
     @PostMapping("/add")
     public Result addPost(@RequestBody Post post) {
@@ -39,14 +45,30 @@ public class PostController {
 
     @GetMapping("/detail/{postId}")
     public Result getPost(@PathVariable("postId") int postId) {
-        Post post = postService.findPostById(postId);
+//        // 统一数据库的评论数据问题，仅调试可用
+//        postMapper.updateCommentCount(postId,commentMapper.countCommentByEntity(1,postId));
+        Post post = postService.getPostDetail(postId);
         return Result.success(post);
     }
 
     @GetMapping("/list")
-    public Result getPostList(@RequestParam("userId") int userId, 
+    public Result getPostList(@RequestParam(value = "userId", required = false) Integer userId, 
                               @RequestParam(name = "partitionId", required = false) Integer partitionId) {
-        List<Post> posts = postService.findPosts(userId, partitionId);
+        // 如果没有提供 userId，尝试从当前登录用户中获取
+        if (userId == null) {
+            User currentUser = hostHolder.getUser();
+            if (currentUser != null) {
+                userId = currentUser.getId();
+            }
+        }
+
+        List<Post> posts;
+        if (userId != null) {
+            posts = postService.findPosts(userId, partitionId);
+        } else {
+            // 如果 userId 仍然为空，表示获取所有帖子
+            posts = postService.findPosts(0, partitionId); // 假设 userId 为 0 表示获取所有帖子
+        }
         return Result.success(posts);
     }
 
@@ -57,9 +79,35 @@ public class PostController {
     }
 
     @GetMapping("/hot")
-    public Result getHotPosts(@RequestParam(defaultValue = "10") int limit) {
-        List<Post> hotPosts = postService.findHotPosts(limit);
+    public Result getHotPosts(@RequestParam(defaultValue = "10") int limit,
+                              @RequestParam(required = false, defaultValue = "all") String period) {
+        List<Post> hotPosts;
+        if (period == null || period.isEmpty() || "all".equalsIgnoreCase(period)) {
+            hotPosts = postService.findHotPosts(limit);
+        } else {
+            hotPosts = postService.findHotPostsByPeriod(limit, period);
+        }
         return Result.success(hotPosts);
+    }
+
+    /**
+     * 收藏排行榜（支持 period+limit）
+     */
+    @GetMapping("/hot/favorites")
+    public Result getTopByFavorites(@RequestParam(defaultValue = "10") int limit,
+                                    @RequestParam(required = false, defaultValue = "all") String period) {
+        List<Post> posts = postService.findTopPostsByFavorites(limit, period);
+        return Result.success(posts);
+    }
+
+    /**
+     * 点赞排行榜（支持 period+limit）
+     */
+    @GetMapping("/hot/likes")
+    public Result getTopByLikes(@RequestParam(defaultValue = "10") int limit,
+                                @RequestParam(required = false, defaultValue = "all") String period) {
+        List<Post> posts = postService.findTopPostsByLikes(limit, period);
+        return Result.success(posts);
     }
 
     @GetMapping("/search")

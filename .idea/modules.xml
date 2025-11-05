@@ -2,11 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/campus-community-system/forum-api/forum-api.iml" filepath="$PROJECT_DIR$/campus-community-system/forum-api/forum-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/campus-community-system/forum-common/forum-common.iml" filepath="$PROJECT_DIR$/campus-community-system/forum-common/forum-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/campus-community-system/forum-dal/forum-dal.iml" filepath="$PROJECT_DIR$/campus-community-system/forum-dal/forum-dal.iml" />
-      <module fileurl="file://$PROJECT_DIR$/campus-community-system/forum-service/forum-service.iml" filepath="$PROJECT_DIR$/campus-community-system/forum-service/forum-service.iml" />
-      <module fileurl="file://$PROJECT_DIR$/campus-community-system/forum-starter/forum-starter.iml" filepath="$PROJECT_DIR$/campus-community-system/forum-starter/forum-starter.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/校园1.iml" filepath="$PROJECT_DIR$/.idea/校园1.iml" />
     </modules>
   </component>

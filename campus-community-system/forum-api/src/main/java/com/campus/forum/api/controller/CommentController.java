@@ -39,7 +39,7 @@ public class CommentController {
             return Result.error(403, "你还没有登录哦");
         }
         comment.setUserId(user.getId());
-        comment.setCreateTime(new Date());
+        comment.setCreateTime(new Date(System.currentTimeMillis()));
         commentService.addComment(comment);
         return Result.success();
     }

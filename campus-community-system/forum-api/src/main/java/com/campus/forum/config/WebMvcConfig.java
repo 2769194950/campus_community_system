@@ -19,7 +19,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg", "/**/*.jpeg",
                         "/user/login", "/user/register",
-                        "/community/user/login", "/community/user/register"
+                        "/community/user/login", "/community/user/register",
+                        // 公共榜单接口（不需要登录）
+                        "/admin/public/leaderboards", 
+                        "/admin/public/leaderboards/**",
+                        "/community/admin/public/leaderboards",
+                        "/community/admin/public/leaderboards/**",
+                        "/api/admin/public/leaderboards",
+                        "/api/admin/public/leaderboards/**"
                 );
     }
 

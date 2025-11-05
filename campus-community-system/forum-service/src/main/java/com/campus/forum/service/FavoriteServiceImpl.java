@@ -21,7 +21,7 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Autowired
     private FavoriteMapper favoriteMapper;
-    
+
     @Autowired
     private PostService postService;
 
@@ -33,7 +33,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         favorite.setUserId(userId);
         favorite.setPostId(postId);
         favoriteMapper.insertFavorite(favorite);
-        
+
         // Update post's favorite count
         postService.updateFavoriteCount(postId, countFavoritesByPostId(postId));
     }
@@ -41,7 +41,7 @@ public class FavoriteServiceImpl implements FavoriteService {
     @Override
     public void removeFavorite(int userId, int postId) {
         favoriteMapper.deleteFavorite(userId, postId);
-        
+
         // Update post's favorite count
         postService.updateFavoriteCount(postId, countFavoritesByPostId(postId));
     }

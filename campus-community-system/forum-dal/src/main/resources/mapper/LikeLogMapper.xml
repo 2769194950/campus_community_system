@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.LikeLogMapper">
+
+    <sql id="selectFields">
+        id, user_id, entity_type, entity_id, entity_user_id, status, create_time, update_time
+    </sql>
+
+    <sql id="insertFields">
+        user_id, entity_type, entity_id, entity_user_id, status
+    </sql>
+
+    <select id="selectLikeLog" resultType="com.campus.forum.dal.domain.LikeLog">
+        SELECT <include refid="selectFields"/>
+        FROM `like`
+        WHERE user_id = #{userId} AND entity_type = #{entityType} AND entity_id = #{entityId}
+    </select>
+
+    <insert id="insertLikeLog" parameterType="com.campus.forum.dal.domain.LikeLog">
+        INSERT INTO `like` (<include refid="insertFields"/>)
+        VALUES (#{userId}, #{entityType}, #{entityId}, #{entityUserId}, #{status})
+    </insert>
+
+    <update id="updateLikeLogStatus">
+        UPDATE `like` SET status = #{status}, update_time = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId} AND entity_type = #{entityType} AND entity_id = #{entityId}
+    </update>
+
+    <select id="countEntityLikes" resultType="int">
+        SELECT COUNT(*) FROM `like`
+        WHERE entity_type = #{entityType} AND entity_id = #{entityId} AND status = 1
+    </select>
+
+    <delete id="deleteLikeLogById">
+        DELETE FROM `like` WHERE id = #{id}
+    </delete>
+
+    <!-- 我的点赞 -->
+    <select id="selectMyLikes" resultType="com.campus.forum.dal.domain.LikeLog">
+        SELECT id,user_id,entity_type,entity_id,entity_user_id,status,create_time,update_time
+        FROM `like`
+        WHERE user_id=#{userId} AND status=1
+        ORDER BY update_time DESC
+    </select>
+
+    <!-- 点赞了我 -->
+    <select id="selectLikesOnMe" resultType="com.campus.forum.dal.domain.LikeLog">
+        SELECT id,user_id,entity_type,entity_id,entity_user_id,status,create_time,update_time
+        FROM `like`
+        WHERE entity_user_id=#{myUserId} AND status=1
+        ORDER BY update_time DESC
+    </select>
+
+    <!-- 我点赞过的帖子ID -->
+    <select id="selectLikedPostIdsByUser" resultType="int">
+        SELECT entity_id
+        FROM `like`
+        WHERE user_id=#{userId} AND status=1 AND entity_type=1
+        ORDER BY update_time DESC
+    </select>
+</mapper>

@@ -2,15 +2,13 @@ package com.campus.forum.service;
 
 import com.campus.forum.dal.domain.Message;
 import com.campus.forum.dal.mapper.MessageMapper;
+import com.campus.forum.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-/**
- * @author Bugar
- * @date 2024/5/16
- */
 @Service
 public class MessageServiceImpl implements MessageService {
 
@@ -18,33 +16,34 @@ public class MessageServiceImpl implements MessageService {
     private MessageMapper messageMapper;
 
     @Override
-    public List<Message> findConversations(int userId) {
+    public Message send(int fromId, int toId, String content) {
+        Message m = new Message();
+        m.setFromId(fromId);
+        m.setToId(toId);
+        m.setConversationId(MessageService.convId(fromId,toId));
+        m.setContent(StringUtils.trimWhitespace(content));
+        m.setStatus(0);
+        messageMapper.insert(m);
+        return messageMapper.selectById(m.getId());
+    }
+
+    @Override
+    public List<Message> conversations(int userId) {
         return messageMapper.selectConversations(userId);
     }
 
     @Override
-    public List<Message> findLetters(String conversationId) {
-        return messageMapper.selectLetters(conversationId);
+    public List<Message> letters(String conversationId, int limit, int offset) {
+        return messageMapper.selectLetters(conversationId, limit, offset);
     }
 
     @Override
-    public int findLetterUnreadCount(int userId, String conversationId) {
-        return messageMapper.selectLetterUnreadCount(userId, conversationId);
+    public int unreadCount(int userId, String conversationId) {
+        return messageMapper.countUnread(userId, conversationId);
     }
 
     @Override
-    public int addMessage(Message message) {
-        return messageMapper.insertMessage(message);
-    }
-
-    @Override
-    public int readMessage(List<Integer> ids) {
-        return messageMapper.updateStatus(ids, 1);
-    }
-
-    @Override
-    public int findNoticeUnreadCount(int userId, String topic) {
-        return messageMapper.selectNoticeUnreadCount(userId, topic);
+    public int markRead(int userId, String conversationId) {
+        return messageMapper.markRead(userId, conversationId);
     }
 }
-

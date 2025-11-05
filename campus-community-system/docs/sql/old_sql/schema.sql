@@ -208,6 +208,24 @@ CREATE TABLE `friend` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='好友表';
 
 -- ----------------------------
+-- Table structure for leaderboard
+-- 榜单配置表
+-- ----------------------------
+DROP TABLE IF EXISTS `leaderboard`;
+CREATE TABLE `leaderboard` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '榜单ID',
+  `title` varchar(100) NOT NULL COMMENT '榜单标题',
+  `description` varchar(500) DEFAULT NULL COMMENT '榜单描述',
+  `type` varchar(20) NOT NULL COMMENT '榜单类型 post-帖子榜 user-用户榜',
+  `period` varchar(20) NOT NULL COMMENT '统计周期 daily-日榜 weekly-周榜 monthly-月榜 all-总榜',
+  `enabled` tinyint(1) DEFAULT '1' COMMENT '是否启用 0-禁用 1-启用',
+  `sort_order` int(11) DEFAULT '0' COMMENT '排序顺序',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='榜单配置表';
+
+-- ----------------------------
 -- Mock User Data (50 users)
 -- ----------------------------
 INSERT INTO `user` (`username`, `password`, `salt`, `email`, `type`, `status`, `avatar_url`, `introduction`, `create_time`) VALUES ('user1', 'f86938a1a8c235728a5d3f2d29f3e489', '8c8e1', 'user1@example.com', 0, 1, 'http://images.nowcoder.com/head/112t.png', 'User profile', NOW());
@@ -260,3 +278,10 @@ INSERT INTO `user` (`username`, `password`, `salt`, `email`, `type`, `status`, `
 INSERT INTO `user` (`username`, `password`, `salt`, `email`, `type`, `status`, `avatar_url`, `introduction`, `create_time`) VALUES ('user48', 'e8f7725916053facc841f3e7b1c4c11b', 'f9a2b', 'user48@example.com', 0, 1, 'http://images.nowcoder.com/head/939t.png', 'User profile', NOW());
 INSERT INTO `user` (`username`, `password`, `salt`, `email`, `type`, `status`, `avatar_url`, `introduction`, `create_time`) VALUES ('user49', '04c355a18b76a33758e9912752495d03', '679c8', 'user49@example.com', 0, 1, 'http://images.nowcoder.com/head/170t.png', 'User profile', NOW());
 INSERT INTO `user` (`username`, `password`, `salt`, `email`, `type`, `status`, `avatar_url`, `introduction`, `create_time`) VALUES ('user50', '212453a290327f42629b3524b8981b2a', '1097f', 'user50@example.com', 0, 1, 'http://images.nowcoder.com/head/233t.png', 'User profile', NOW());
+
+-- ----------------------------
+-- Default Leaderboard Data
+-- ----------------------------
+INSERT INTO `leaderboard` (`id`, `title`, `description`, `type`, `period`, `enabled`, `sort_order`) VALUES
+(1, '热门帖子榜', '根据点赞、评论、收藏综合排名的热门帖子', 'post', 'all', 1, 1),
+(2, '活跃用户榜', '根据发帖和评论活跃度排名的用户', 'user', 'monthly', 1, 2);

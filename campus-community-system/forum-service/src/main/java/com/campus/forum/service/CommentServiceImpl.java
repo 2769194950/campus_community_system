@@ -22,17 +22,16 @@ public class CommentServiceImpl implements CommentService, ForumConstant {
 
     @Autowired
     private CommentMapper commentMapper;
-
     @Autowired
-    private PostMapper postMapper;
+    private PostMapper postMapper;   // 已存在
+    @Autowired
+    private PostService postService; // 已存在
 
     @Override
     public List<Comment> findCommentsByEntity(int entityType, int entityId) {
         return commentMapper.selectCommentsByEntity(entityType, entityId);
     }
 
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     public int addComment(Comment comment) {
         if (comment == null) {
             throw new IllegalArgumentException("参数不能为空!");
@@ -40,20 +39,60 @@ public class CommentServiceImpl implements CommentService, ForumConstant {
 
         // 添加评论
         comment.setContent(HtmlUtils.htmlEscape(comment.getContent()));
-        int rows = commentMapper.insertComment(comment);
+        // 设置状态,0正常，1拉黑
+        comment.setStatus(0);
+        int isSuccess = commentMapper.insertComment(comment);
 
         // 更新帖子评论数量
         if (comment.getEntityType() == ENTITY_TYPE_POST) {
-            int count = commentMapper.selectCommentsByEntity(comment.getEntityType(), comment.getEntityId()).size();
-            postMapper.updateCommentCount(comment.getEntityId(), count);
-        }
+            postMapper.incrementCommentCount(comment.getEntityId());
 
-        return rows;
+        }
+        return isSuccess;
     }
 
     @Override
     public int deleteComment(int commentId) {
-        return commentMapper.updateStatus(commentId, 2); // 2 represents deleted status
+        int postId=commentMapper.selectByIdComment(commentId).getEntityId();
+        // 删除评论
+        int isSuccess= commentMapper.delById(commentId);
+        if (isSuccess!=0){
+            // 评论数减一
+            postMapper.decrementCommentCount(postId);
+        }
+        return  isSuccess;
+    }
+
+    // --- 新增 ---
+    @Override
+    public List<Comment> findCommentsByUser(int userId) {
+        return commentMapper.selectCommentsByUser(userId);
+    }
+
+    @Override
+    public List<Comment> findCommentsOnMyPosts(int myUserId) {
+        return commentMapper.selectCommentsOnMyPosts(myUserId);
+    }
+
+    @Override
+    public List<Comment> findRepliesToMe(int myUserId) {
+        return commentMapper.selectRepliesToMe(myUserId);
+    }
+    
+    // --- 管理员专用方法实现 ---
+    @Override
+    public List<Comment> findAllComments(int offset, int limit) {
+        return commentMapper.selectAllComments(offset, limit);
+    }
+    
+    @Override
+    public List<Comment> searchComments(String keyword, int offset, int limit) {
+        return commentMapper.searchComments(keyword, offset, limit);
+    }
+    
+    @Override
+    public int batchDeleteComments(List<Integer> commentIds) {
+        return commentMapper.batchDeleteComments(commentIds);
     }
 }
 

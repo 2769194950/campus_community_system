@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -223,10 +224,34 @@ public class UserServiceImpl implements UserService, ForumConstant {
         return rows;
     }
 
+    // ===== 活跃用户榜 =====
+    @Override
+    public java.util.List<com.campus.forum.dal.domain.User> findActiveUsers(int limit) {
+        return userMapper.selectActiveUsers(0, limit);
+    }
+
+    @Override
+    public java.util.List<com.campus.forum.dal.domain.User> findActiveUsersByPeriod(int limit, String period) {
+        if (period == null || period.isEmpty() || "all".equalsIgnoreCase(period)) {
+            return userMapper.selectActiveUsers(0, limit);
+        }
+        return userMapper.selectActiveUsersByPeriod(0, limit, period);
+    }
+
     // 1.优先从缓存中取值
     private User getCache(int userId) {
         String redisKey = RedisKeyUtil.getUserKey(userId);
-        return (User) redisTemplate.opsForValue().get(redisKey);
+        Object obj = redisTemplate.opsForValue().get(redisKey);
+        
+        // 增加类型检查，防止类型转换异常
+        if (obj instanceof User) {
+            return (User) obj;
+        } else if (obj != null) {
+            // 如果Redis中存储的不是User对象，清除该键并返回null
+            redisTemplate.delete(redisKey);
+        }
+        
+        return null;
     }
 
     // 2.取不到时初始化缓存数据
@@ -360,13 +385,21 @@ public class UserServiceImpl implements UserService, ForumConstant {
     
     // ==================== 密保问题功能 ====================
     
+    @Transactional
     @Override
     public int updateSecurityQuestion(int userId, String question, String answer) {
         // 将答案加密存储（使用MD5）
         String encryptedAnswer = StringUtils.isNotBlank(answer) ? ForumUtil.md5(answer.toLowerCase().trim()) : null;
         
+        // 更新数据库
         int rows = userMapper.updateSecurityQuestion(userId, question, encryptedAnswer);
+        
+        // 清除旧缓存
         clearCache(userId);
+        
+        // 主动刷新缓存，加载最新数据
+        initCache(userId);
+        
         return rows;
     }
     

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.forum.dal.mapper.LeaderboardMapper">
+
+    <sql id="selectFields">
+        id, title, description, type, period, enabled, sort_order, display_count, create_time, update_time
+    </sql>
+
+    <sql id="insertFields">
+        title, description, type, period, enabled, sort_order
+    </sql>
+
+    <!-- 查询所有榜单配置 -->
+    <select id="selectAllLeaderboards" resultType="com.campus.forum.dal.domain.Leaderboard">
+        SELECT <include refid="selectFields"/>
+        FROM leaderboard
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <!-- 根据ID查询榜单配置 -->
+    <select id="selectLeaderboardById" resultType="com.campus.forum.dal.domain.Leaderboard">
+        SELECT <include refid="selectFields"/>
+        FROM leaderboard
+        WHERE id = #{id}
+    </select>
+
+    <!-- 插入榜单配置 -->
+    <insert id="insertLeaderboard" parameterType="com.campus.forum.dal.domain.Leaderboard" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO leaderboard (<include refid="insertFields"/>)
+        VALUES (#{title}, #{description}, #{type}, #{period}, #{enabled}, #{sortOrder})
+    </insert>
+
+    <!-- 更新榜单配置 -->
+    <update id="updateLeaderboard" parameterType="com.campus.forum.dal.domain.Leaderboard">
+        UPDATE leaderboard SET
+            title = #{title},
+            description = #{description},
+            type = #{type},
+            period = #{period},
+            enabled = #{enabled},
+            sort_order = #{sortOrder},
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除榜单配置 -->
+    <delete id="deleteLeaderboardById">
+        DELETE FROM leaderboard WHERE id = #{id}
+    </delete>
+
+    <!-- 更新榜单启用状态 -->
+    <update id="updateLeaderboardEnabled">
+        UPDATE leaderboard SET
+            enabled = #{enabled},
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 查询启用的榜单配置 -->
+    <select id="selectEnabledLeaderboards" resultType="com.campus.forum.dal.domain.Leaderboard">
+        SELECT <include refid="selectFields"/>
+        FROM leaderboard
+        WHERE enabled = 1
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+</mapper>

@@ -1,6 +1,8 @@
 package com.campus.forum.dal.domain;
 
 import lombok.Data;
+
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
