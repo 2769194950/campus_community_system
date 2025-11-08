@@ -10,12 +10,12 @@
       <router-link v-if="user" :to="`/profile/${user?.id || ''}`">个人主页</router-link>
       <router-link v-if="user" to="/messages" class="messages-link">
         消息中心
-        <el-badge 
-          v-if="unreadCount > 0" 
-          :value="unreadCount" 
-          :max="99" 
-          class="unread-badge"
-          type="danger"
+        <el-badge
+            v-if="unreadCount > 0"
+            :value="unreadCount"
+            :max="99"
+            class="unread-badge"
+            type="danger"
         />
       </router-link>
     </nav>
@@ -26,43 +26,28 @@
     </nav>
 
     <div class="right">
-      <!-- 未登录时显示登录/注册按钮 -->
+      <!-- 未登录时显示登录/注册按钮（保持你的弹窗触发） -->
       <div v-if="!user">
-        <el-button 
-          type="primary" 
-          size="small" 
-          @click="$emit('show-login-modal')"
+        <el-button
+            type="primary"
+            size="small"
+            @click="$emit('show-login-modal')"
         >
           登录
         </el-button>
-        <el-button 
-          type="success" 
-          size="small" 
-          @click="$emit('show-register-modal')"
+        <el-button
+            type="success"
+            size="small"
+            @click="$emit('show-register-modal')"
         >
           注册
         </el-button>
       </div>
 
-      <!-- 登录后欢迎语和用户菜单 -->
+      <!-- 登录后：欢迎 xxx！ + 退出按钮（替换原来的下拉菜单） -->
       <template v-else>
-        <span class="welcome">欢迎，{{ user.username }}</span>
-        <el-dropdown trigger="click">
-          <span class="user">
-            <el-avatar size="small" style="margin-right:6px">
-              {{ user.username[0] }}
-            </el-avatar>
-            {{ user.username }}
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-if="!isAdmin" @click="$router.push(`/profile/${user.id}`)">
-                个人主页
-              </el-dropdown-item>
-              <el-dropdown-item divided @click="onLogout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <span class="welcome">欢迎，{{ displayName }}！</span>
+        <el-button size="small" type="danger" @click="onLogout">退出</el-button>
       </template>
     </div>
   </div>
@@ -82,6 +67,10 @@ export default {
   },
   computed: {
     ...mapGetters(["user", "isAdmin"]),
+    // 展示名：优先昵称，其次用户名
+    displayName() {
+      return (this.user && (this.user.nickname || this.user.username)) || "用户";
+    }
   },
   watch: {
     user: {
@@ -103,24 +92,24 @@ export default {
       const ok = await this.$store.dispatch("logout");
       if (ok) this.$router.replace("/login");
     },
-    
+
     startUnreadPolling() {
       // 立即获取一次未读消息数
       this.fetchUnreadCount();
-      
+
       // 每隔5秒轮询一次未读消息数
       this.unreadPolling = setInterval(() => {
         this.fetchUnreadCount();
       }, 5000);
     },
-    
+
     stopUnreadPolling() {
       if (this.unreadPolling) {
         clearInterval(this.unreadPolling);
         this.unreadPolling = null;
       }
     },
-    
+
     async fetchUnreadCount() {
       try {
         const response = await axios.get("/api/message/unread-count");

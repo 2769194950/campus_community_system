@@ -1,177 +1,227 @@
 <template>
-  <div class="login-wrap">
-    <div class="brand">
-      <span class="logo">Campus Forum</span>
-      <span class="slogan">让校园交流更简单</span>
-    </div>
+  <div class="login-page" :style="bgStyle">
+    <!-- 半透明遮罩（可选） -->
+    <div class="bg-overlay"></div>
 
-    <el-card class="box" :shadow="'hover'">
-      <div class="box-title">
-        <el-icon class="title-icon"><UserFilled/></el-icon>
-        <div>
-          <h2>登录</h2>
-          <p class="subtitle">欢迎回来，请输入账号密码</p>
-        </div>
+    <div class="login-wrap">
+      <div class="brand">
+        <h1>Campus Forum</h1>
+        <span>让校园交流更简单</span>
       </div>
 
-      <el-form :model="form" ref="formRef" :rules="rules" label-width="78px" @keyup.enter="onSubmit">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model.trim="form.username" maxlength="32" clearable placeholder="请输入用户名">
-            <template #prefix><el-icon><User/></el-icon></template>
-          </el-input>
-        </el-form-item>
+      <el-card class="login-card" shadow="always">
+        <div class="login-title">
+          <el-icon><User /></el-icon>
+          <span>登录</span>
+        </div>
 
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" show-password maxlength="64" placeholder="请输入密码">
-            <template #prefix><el-icon><Lock/></el-icon></template>
-          </el-input>
-        </el-form-item>
-
-        <el-form-item>
-          <el-checkbox v-model="remember">记住我</el-checkbox>
-          <div class="flex-spacer"></div>
-          <el-button link type="primary" @click="$router.push('/register')">去注册</el-button>
-        </el-form-item>
-
-        <el-button
-            type="primary"
-            size="large"
-            class="submit-btn"
-            :loading="loading"
-            @click="onSubmit"
+        <el-form
+            ref="formRef"
+            :model="form"
+            :rules="rules"
+            label-width="70px"
+            @keyup.enter.native="onSubmit"
         >
-          登录
-        </el-button>
-      </el-form>
-    </el-card>
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model.trim="form.username" placeholder="请输入用户名" clearable />
+          </el-form-item>
 
-    <footer class="footer">© {{year}} Campus Forum</footer>
+          <el-form-item label="密码" prop="password">
+            <el-input
+                v-model="form.password"
+                type="password"
+                placeholder="请输入密码"
+                show-password
+                clearable
+            />
+          </el-form-item>
+
+          <div class="login-extras">
+            <el-checkbox v-model="remember">记住我</el-checkbox>
+            <router-link class="link" to="/register">去注册</router-link>
+          </div>
+
+          <el-button
+              class="login-btn"
+              type="primary"
+              :loading="loading"
+              size="large"
+              @click="onSubmit"
+          >
+            登录
+          </el-button>
+        </el-form>
+      </el-card>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import { User, Lock, UserFilled } from "@element-plus/icons-vue";
+/**
+ * 背景图方式：在 <script> 里引入并绑定 style，避免 url 解析问题
+ * 图片路径：src/assets/登录页面.jpg
+ */
+import bg from '@/assets/登录页面.jpg'
+import { User } from '@element-plus/icons-vue'
 
 export default {
-  name: "Login",
-  components: { User, Lock, UserFilled },
-  data() {
+  name: 'Login',
+  components: { User },
+  data () {
     return {
-      form: { username: "", password: "" },
+      // 背景图样式绑定
+      bgStyle: {
+        background: `url(${bg}) center center / cover no-repeat fixed`
+      },
+      form: {
+        username: '',
+        password: ''
+      },
       remember: true,
       loading: false,
-      year: new Date().getFullYear(),
       rules: {
-        username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
-      },
-    };
-  },
-  computed: {
-    ...mapGetters(["isAdmin"]),
-  },
-  mounted() {
-    // 如果本地记住了用户名，自动回填
-    const cached = localStorage.getItem("last_username");
-    if (cached) this.form.username = cached;
+        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+      }
+    }
   },
   methods: {
-    async onSubmit() {
-      if (this.loading) return;
-      this.$refs.formRef.validate(async (ok) => {
-        if (!ok) return;
-        this.loading = true;
-        const okLogin = await this.$store.dispatch("login", this.form);
-        this.loading = false;
+    onSubmit () {
+      this.$refs.formRef.validate(async (valid) => {
+        if (!valid) return
+        try {
+          this.loading = true
+          //  使用 Vuex 的登录 action，写入 user 与 token（与小框登录一致）
+          const ok = await this.$store.dispatch('login', {
+            username: this.form.username,
+            password: this.form.password,
+            remember: this.remember
+          })
 
-        if (!okLogin) return;
-
-        if (this.remember) localStorage.setItem("last_username", this.form.username);
-        else localStorage.removeItem("last_username");
-
-        // 登录后跳转：管理员 → 后台；普通用户 → 首页
-        if (this.$store.getters.isAdmin) this.$router.replace("/admin");
-        else this.$router.replace("/");
-      });
-    },
-  },
-};
+          if (ok) {
+            this.$message.success('登录成功')
+            // 跳转到首页或重定向目标
+            const redirect = this.$route.query.redirect || '/'
+            this.$router.replace(redirect)
+          } else {
+            this.$message.error('用户名或密码错误')
+          }
+        } catch (err) {
+          console.error(err)
+          this.$message.error('网络异常，请稍后再试')
+        } finally {
+          this.loading = false
+        }
+      })
+    }
+  }
+}
 </script>
 
 <style scoped>
+/* 整体背景容器 */
+.login-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: auto;
+}
+
+/* 半透明遮罩（可选） */
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(1px);
+}
+
+/* 内容区居中 */
 .login-wrap {
-  min-height: 100vh;
+  position: relative;
+  z-index: 1; /* 盖住遮罩 */
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 80px 16px 48px;
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  background: radial-gradient(1200px 600px at 20% -20%, #eaf3ff 0%, #ffffff 50%, #ffffff 100%),
-  linear-gradient(135deg, #f5f7ff 0%, #ffffff 60%);
+  grid-template-columns: 1fr 420px;
+  gap: 32px;
+  align-items: start;
+  min-height: 100%;
 }
 
+/* 左侧品牌区 */
 .brand {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 22px 24px 0 24px;
-  user-select: none;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  padding: 24px 8px;
 }
-.logo {
+.brand h1 {
+  margin: 0 0 8px;
+  font-size: 40px;
+  line-height: 1.2;
   font-weight: 800;
-  font-size: 22px;
-  color: #409eff;
 }
-.slogan {
-  color: #909399;
-  font-size: 13px;
+.brand span {
+  font-size: 16px;
+  opacity: .9;
 }
 
-.box {
-  width: 420px;
-  margin: 6vh auto 0 auto;
-  border-radius: 16px;
-  --el-card-padding: 24px;
+/* 登录卡片 */
+.login-card {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  background: rgba(255,255,255,.9);
+  backdrop-filter: saturate(1.3) blur(3px);
 }
-.box-title {
+
+/* 标题 */
+.login-title {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 8px;
-}
-.title-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: inline-grid;
-  place-items: center;
-  color: #fff;
-  background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
-}
-h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-.subtitle {
-  margin: 4px 0 0 0;
-  color: #909399;
-  font-size: 13px;
-}
-
-.flex-spacer {
-  flex: 1;
-}
-.submit-btn {
-  width: 100%;
-  margin-top: 4px;
-  height: 40px;
+  gap: 6px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 1px;
+  margin-bottom: 12px;
+  color: #1f2f56;
 }
 
-.footer {
-  text-align: center;
-  padding: 18px 0 24px;
-  color: #b1b5bd;
-  font-size: 12px;
+/* 附加项（记住我/去注册） */
+.login-extras {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 0 18px;
+}
+.login-extras .link {
+  color: #409eff;
+  text-decoration: none;
+}
+.login-extras .link:hover {
+  text-decoration: underline;
+}
+
+/* 按钮 */
+.login-btn {
+  width: 100%;
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .login-wrap {
+    grid-template-columns: 1fr;
+  }
+  .brand {
+    text-align: center;
+    padding: 0;
+  }
+  .brand h1 {
+    font-size: 32px;
+  }
 }
 </style>

@@ -4,8 +4,8 @@
       @show-login-modal="showLoginModal = true"
       @show-register-modal="showRegisterModal = true"
     />
-    <main class="main-content">
-      <el-container>
+    <main class="main-content" :class="{ 'login-page': $route.name === 'Login' }">
+      <el-container :class="{ 'login-container': $route.name === 'Login' }">
         <router-view />
       </el-container>
     </main>
@@ -73,10 +73,23 @@ body {
   padding: 20px 0;
 }
 
+/* 当路由为登录页面时，主内容区域占满全屏 */
+.main-content.login-page {
+  padding: 0;
+  height: 100vh;
+}
+
 .el-container {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* 当路由为登录页面时，取消容器限制 */
+.el-container.login-container {
+  max-width: none;
+  margin: 0;
+  height: 100%;
 }
 
 .footer {
